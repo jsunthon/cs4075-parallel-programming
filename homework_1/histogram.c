@@ -12,14 +12,13 @@ process 0 will be the one to scatter the data to all the other processes.
 
 void Read_vector(double[], int, int, char[], int, MPI_Comm);
 void Get_input(int, int*, int*, int*, int*);
-void Gen_bin_maxes(int, int, int, int, int*);
+void Gen_bin_maxes(int, int, int, int, int[]);
 double random_double(int, int);
 
 int main() {
 	int my_rank, comm_sz, bin_count, min_meas, max_meas, data_count, n, local_n;
 	double* local_data = NULL;
 	double* data = NULL;
-	int* bin_maxes = NULL;
 	MPI_Init(NULL, NULL);
 	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 	MPI_Comm_size(MPI_COMM_WORLD, &comm_sz);
@@ -27,8 +26,8 @@ int main() {
 
 	Get_input(my_rank, &bin_count, &min_meas, &max_meas, &data_count);
 	printf("bin count received from process: %d, -> %d\n", my_rank, bin_count);
+	int bin_maxes[bin_count];
 		// data = malloc(bin_count*sizeof(double));
-	bin_maxes = malloc(bin_count*sizeof(int));
 	Gen_bin_maxes(my_rank, min_meas, max_meas, bin_count, bin_maxes);
 	print_bin_maxes(bin_maxes, bin_count);
 
@@ -66,7 +65,7 @@ double random_double(int min, int max) {
 	return r;
 }
 
-void Gen_bin_maxes(int my_rank, int min_meas, int max_meas, int bin_count, int* bin_maxes) {
+void Gen_bin_maxes(int my_rank, int min_meas, int max_meas, int bin_count, int bin_maxes[]) {
 	if (my_rank == 0) {
 		int i, bin_width = (max_meas - min_meas) / bin_count;
 
@@ -74,7 +73,7 @@ void Gen_bin_maxes(int my_rank, int min_meas, int max_meas, int bin_count, int* 
 			bin_maxes[i] = min_meas + bin_width * (i + 1);
 		}
 	}
-	MPI_Bcast(bin_maxes, 1, MPI_INT, 0, MPI_COMM_WORLD);
+	MPI_Bcast(bin_maxes, bin_count, MPI_INT, 0, MPI_COMM_WORLD);
 }
 
 // void Read_vector(
