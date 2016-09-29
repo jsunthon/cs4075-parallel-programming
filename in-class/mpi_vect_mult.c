@@ -63,9 +63,8 @@ int main(void) {
    MPI_Reduce(&local_dot_product, &dot_product, 1, MPI_DOUBLE, MPI_SUM, 0,
       MPI_COMM_WORLD);
    if (my_rank == 0) {
-      printf("The dot product of the two vectors: %lf", dot_product);
+      printf("\nThe dot product of the two vectors: %lf\n", dot_product);
    }
-   
    /* Compute scalar multiplication and print out result */
    local_scalar_mult1 = malloc(local_n * sizeof(double)); // alloc mem
    local_scalar_mult2 = malloc(local_n * sizeof(double)); // alloc mem
@@ -73,7 +72,7 @@ int main(void) {
    Par_vector_scalar_mult(local_vec2, scalar, local_scalar_mult2, local_n); // compute the scalar product of vec 2 with scalar, store in local sclar mult 1
 
    Print_vector(local_scalar_mult1, local_n, n, "\nScalar vector product of vector 1", my_rank, MPI_COMM_WORLD);
-   Print_vector(local_scalar_mult2, local_n, n, "Scalar vector product of vector 2", my_rank, MPI_COMM_WORLD);
+   Print_vector(local_scalar_mult2, local_n, n, "\nScalar vector product of vector 2", my_rank, MPI_COMM_WORLD);
 
    free(local_scalar_mult2);
    free(local_scalar_mult1);
