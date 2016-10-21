@@ -1,0 +1,48 @@
+a. Serial algorithm:
+	INIT and READ input_array
+	INIT prefix_sums array
+
+	FOR every element in input_array
+		IF not the first element
+			SET partial_sum EQUAL 0
+			FOR every previous element
+				SET partial_sum EQUAL to addition of itself and element
+			Place partial_sum in prefix_sums at an index EQUAL
+			to this element's index in input_array
+		ELSE
+			Place element in the first index of prefix_sums
+		ENDIF
+	END FOR
+
+	DISPLAY prefix_sums
+
+b. Parallelized algorithm:
+	
+	IF my_rank EQUAL 0
+		READ array
+		CALL MPI_Scatter on array
+	ELSE
+		CALL MPI_Scatter on array
+	ENDIF
+
+	IF my_rank NOT EQUAL comm_sz
+		CALL MPI_Send to send element to
+		process my_rank + 1
+	ENDIF
+
+	IF my_rank NOT EQUAL 0
+		CALL MPI_Revc to get element from
+		process my_rank - 1
+
+		COMPUTE prefix_sum by adding element
+		received from previous process to current element
+	ENDIF
+
+	IF my_rank EQUAL 0
+		CALL MPI_Gather to gather prefix_sums
+		DISPLAY prefix_sums
+	ELSE
+		CALL MPI_Gather
+	ENDIF
+
+	DISPLAY prefix_sums

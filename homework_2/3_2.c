@@ -36,25 +36,15 @@ int main(void) {
 	// Get the last element in local_prefix_sums to pass on to the next process
 	last_prefix_sum = local_prefix_sums[local_n - 1];
 
-	/* Each processor except the last send the last prefix sum 
-	to the next processor to use it */
-	if (my_rank != (comm_sz - 1)) {
-		MPI_Send(&last_prefix_sum, 1, MPI_INT, my_rank + 1, 0, MPI_COMM_WORLD);
+	int last_total_prefix_sum;
+	MPI_Scan(&last_prefix_sum, &last_total_prefix_sum, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+
+	int previous_proc_last_prefix_sum = last_total_prefix_sum - (local_prefix_sums[local_n - 1]);
+
+	for (int i = 0; i < local_n; i++) {
+		local_prefix_sums[i] += previous_proc_last_prefix_sum;
 	}
 
-	/* All other processors except 0 must add the previous process's
-	last prefix sum to each prefix sum in their local_prefix_sums array
-	to get the final prefix sums
-	*/
-	if (my_rank != 0) {
-		MPI_Recv(&prev_prefix_sum, 1, MPI_INT, my_rank - 1, 0, 
-					MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-		Gen_final_prefix_sum(prev_prefix_sum, local_prefix_sums, local_n);
-	}
-
-	/* Process 0 will gather all of the local_prefix_sums from all processes
-	to print out the cumulative array of prefix sums
-	*/
 	if (my_rank == 0) {
  		prefix_sums = malloc(n * sizeof(int));
       	MPI_Gather(local_prefix_sums, local_n, MPI_INT, prefix_sums, local_n,
