@@ -33,13 +33,10 @@ int main(void) {
 	local_prefix_sums = malloc(local_n*sizeof(int));
 	Gen_local_prefix_sums(local_data, local_prefix_sums, local_n);
 
-	// Get the last element in local_prefix_sums to pass on to the next process
-	last_prefix_sum = local_prefix_sums[local_n - 1];
+	int* scanned = malloc(local_n*sizeof(int));
+	MPI_Scan(local_prefix_sums, scanned, local_n, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
 
-	int last_total_prefix_sum;
-	MPI_Scan(&last_prefix_sum, &last_total_prefix_sum, 1, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
-
-	int previous_proc_last_prefix_sum = last_total_prefix_sum - (local_prefix_sums[local_n - 1]);
+	int previous_proc_last_prefix_sum = scanned[local_n - 1] - (local_prefix_sums[local_n - 1]);
 
 	for (int i = 0; i < local_n; i++) {
 		local_prefix_sums[i] += previous_proc_last_prefix_sum;
@@ -104,10 +101,12 @@ void Print_vector(char title[], int local_data[], int local_n) {
 
 /* Calculate the prefix sums of this processor's local_data array */
 void Gen_local_prefix_sums(int local_data[], int local_prefix_sums[], int local_n) {
-	int sum = 0;
 	for (int i = 0; i < local_n; i++) {
-		sum += local_data[i];
-		local_prefix_sums[i] = sum;
+		if (i == 0) {
+			local_prefix_sums[i] = local_data[i];
+		} else {
+			local_prefix_sums[i] = local_data[i] + local_prefix_sums[i - 1];
+		}
 	}
 }
 
