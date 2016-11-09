@@ -1,10 +1,11 @@
 /**
- * Compile: _
+ * Compile: gcc -g -Wall -o 4_3_c 4_3_c.c -lm -lpthread
  *
- * Run: ./4_3_b < 2k number of threads >
+ * Run: ./4_3_c < number of threads >
  *
- * Generalize this so that it works with 2k threads – 
- * odd-ranked threads are consumers and even-ranked threads are producers.
+ * Generalize this so that each thread is both a producer and a consumer. 
+ * For example, suppose that thread q “sends” a message to thread (q + 1) mod t 
+ * and “receives” a message from thread (q − 1 + t) mod t, where t is the total number of threads.
  */
 
 #include <stdio.h>
@@ -28,17 +29,15 @@ int main(int argc, char* argv[]) {
 
 	Get_args(argc, argv);
 
-	messages = malloc((thread_count / 2) * sizeof(char *)); /* only the odd ranked threads consume messages, hence thread_count / 2 */
+	messages = malloc(thread_count * sizeof(char *));
+	mutexes = malloc(thread_count * sizeof(pthread_mutex_t));
 
-	/* Each odd and even rank thread pair only needs to share a mutex, hence (thread_count) / 2*/
-	mutexes = malloc((thread_count / 2) * sizeof(pthread_mutex_t));
-
-	messages_available = malloc((thread_count / 2) * sizeof(int));
-	for (int i = 0; i < (thread_count / 2); i++) {
+	messages_available = malloc(thread_count * sizeof(int));
+	for (int i = 0; i < thread_count; i++) {
 		messages_available[i] = 0;
 	}
 
-	for (mutex_index = 0; mutex_index < (thread_count / 2); mutex_index++) {
+	for (mutex_index = 0; mutex_index < thread_count; mutex_index++) {
 		pthread_mutex_init(&mutexes[mutex_index], NULL); //every mutex is unlocked initially.
 	}
 
@@ -62,29 +61,32 @@ int main(int argc, char* argv[]) {
 
 void* Send_msg(void* rank) {
 	long my_rank = (long) rank;
+	long source = (my_rank - 1 + thread_count) % thread_count;
+	long dest = (my_rank + 1) % thread_count;
 	char* my_msg = malloc(1024 * sizeof (char));
+	while (1) {
+		pthread_mutex_lock(&mutexes[dest]);
+		// printf("my_rank: %ld\n", my_rank);
+		sprintf(my_msg, "Hello to thread %ld from thread %ld", dest, my_rank);
+		// printf("my_rank: %ld finished sending msg to thread %ld.\n", my_rank, dest);
+		messages[dest] = my_msg;
+		messages_available[dest] = 1;
+		pthread_mutex_unlock(&mutexes[dest]);
+		break;
+	}
 
 	while (1) {
-		pthread_mutex_lock(&mutexes[(my_rank / 2)]);
-
-		/* Odd ranked threads will consume */
-		if (my_rank % 2 != 0) {
-			if (messages_available[(my_rank / 2)] == 1) {
-				printf("Consumer Thread %ld > %s\n", my_rank, messages[(my_rank / 2)]);
-				pthread_mutex_unlock(&mutexes[(my_rank / 2)]);
-				break;
-			}
-		} 
-		/* Even ranked thrads will produce */
-		else {
-			sprintf(my_msg, "Hello to Consumer thread %ld from Producer thread %ld", my_rank + 1, my_rank);
-			messages[(my_rank / 2)] = my_msg;
-			messages_available[(my_rank / 2)] = 1;
-			pthread_mutex_unlock(&mutexes[(my_rank / 2)]);
+		pthread_mutex_lock(&mutexes[my_rank]);
+		// printf("my_rank: %ld, checking if message is avail. \n", my_rank);
+		if (messages_available[my_rank] == 1) {
+			// printf("myrank: %ld ; not null\n", my_rank);
+			printf("Thread %ld > %s\n", my_rank, messages[my_rank]);
+			pthread_mutex_unlock(&mutexes[my_rank]);
 			break;
 		}
-		pthread_mutex_unlock(&mutexes[(my_rank / 2)]);
+		pthread_mutex_unlock(&mutexes[my_rank]);
 	}
+
 	return NULL;
 }
 
@@ -99,7 +101,7 @@ void Get_args(int argc, char* argv[]) {
 
    thread_count = strtoll(argv[1], NULL, 10);
 
-   if (thread_count <= 0 || thread_count % 2 != 0) Usage(argv[0]);
+   if (thread_count <= 0) Usage(argv[0]);
 }  /* Get_args */
 
 
@@ -109,6 +111,6 @@ void Get_args(int argc, char* argv[]) {
  * In arg:    prog_name
  */
 void Usage(char* prog_name) {
-   fprintf(stderr, "usage: %s < 2k number of threads >\n", prog_name);
+   fprintf(stderr, "usage: %s < number of threads > 0 >\n", prog_name);
    exit(0);
 }  /* Usage */
