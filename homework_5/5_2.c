@@ -1,8 +1,8 @@
 /**
- * Write a Pthreads program that uses a Monte Carlo method to estimate pi. 
+ * Write a Pthreads program that implements Histogram. 
  *
  *  Compile the program: gcc -g -Wall -o 5_2 5_2.c -lm -lpthread
- *  Run: ./5_3 <number of threads> <number of bins> <smallest data value> <largest data value> <number of data values>
+ *  Run: ./5_2 <number of threads> <number of bins> <smallest data value> <largest data value> <number of data values>
  */
 
 #include <stdio.h>
