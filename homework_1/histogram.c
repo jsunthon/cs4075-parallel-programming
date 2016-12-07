@@ -1,3 +1,8 @@
+/*
+Use MPI to implement the histogram program discussed in Chapter 2. Have
+process 0 read in the input data and distribute it among the processes. Also
+have process 0 printout the program.
+*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <mpi.h>

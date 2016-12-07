@@ -1,4 +1,8 @@
-/* Compile: gcc -g -Wall -o 4_1 4_1.c -lm -lpthread
+/* 
+Modify the mutex version of the π calculation program so that the critical 
+section is in the for loop. Compare the performance of your version with the serial version.
+
+Compile: gcc -g -Wall -o 4_1 4_1.c -lm -lpthread
    Run: ./4_1 2 100000
  */
 #include <stdio.h>

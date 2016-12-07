@@ -1,3 +1,6 @@
+/**
+Compute trapezoidal rule with mpi_reduce
+*/
 #include <stdio.h>
 #include <mpi.h>
 #include "../headers/trap_helpers.h"
